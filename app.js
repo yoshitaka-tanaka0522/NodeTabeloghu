@@ -10,7 +10,13 @@ const app = express();
 app.set("view engine","ejs");
 app.disable("x-powered-by");
 
-
+//ミドルウェアとして読み込まれてテンプレートに渡せる
+//Expose global method to view engine
+app.use((req, res, next) => {
+  res.locals.moment = require("moment");
+  res.locals.padding = require("./lib/math/math.js").padding;
+  next();
+});
 //favicon
 app.use(favicon(path.join(__dirname,"/public/favicon.ico")));
 
@@ -24,24 +30,24 @@ app.use("/public",express.static(path.join(__dirname,"/public")));
 app.use(accesslogger());
 
 //DynamicResource
+app.use("/shops", require("./routes/shops.js"));
 app.use("/", require("./routes/index.js"))
-app.use("/", require("./routes/index.js"))
-app.use("/test", async (req, res, next) => {
-  const { MySQLClient, sql } = require("./lib/database/client.js");
-  var data;
+// app.use("/test", async (req, res, next) => {
+//   const { MySQLClient, sql } = require("./lib/database/client.js");
+//   var data;
 
-  try {
-    //connectもqueryもコールバックなのでコードが見づらいので
-    //避けるために非同期に書き変えたい→promisfyで非同期化する
-    //第二引数に渡す値はサニタイズ化されてsqlに渡されるのでsqlインジェクション対策になる    
-    data = await MySQLClient.executeQuery(await sql("SELECT_SHOP_BASIC_BY_ID"),[1]);
-    console.log(data);
-  } catch (err) {
-    next(err);
-  }
+//   try {
+//     //connectもqueryもコールバックなのでコードが見づらいので
+//     //避けるために非同期に書き変えたい→promisfyで非同期化する
+//     //第二引数に渡す値はサニタイズ化されてsqlに渡されるのでsqlインジェクション対策になる    
+//     data = await MySQLClient.executeQuery(await sql("SELECT_SHOP_BASIC_BY_ID"),[1]);
+//     console.log(data);
+//   } catch (err) {
+//     next(err);
+//   }
 
-  res.end("OK");
-});
+//   res.end("OK");
+// });
 
 //setApplicationlog→処理の最後に記載することで全ての処理のアプリログが出力できる
 app.use(applicationlogger());
